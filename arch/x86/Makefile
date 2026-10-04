@@ -161,7 +161,15 @@ else
 
 ifdef CONFIG_X86_NATIVE_CPU
         KBUILD_CFLAGS += -march=native
+        # Prevent the compiler from generating EGPR use. The kernel is
+        # not yet prepared for general in-kernel use.
+        KBUILD_CFLAGS += $(call cc-option,-mno-apx-features=egpr)
+
+        # generate_rust_target.rs handles Rust APX gating.
         KBUILD_RUSTFLAGS += -Ctarget-cpu=native
+else ifneq ($(filter-out 1,$(CONFIG_X86_64_VERSION)),)
+        KBUILD_CFLAGS += -march=x86-64-v$(CONFIG_X86_64_VERSION) -mtune=generic
+        KBUILD_RUSTFLAGS += -Ctarget-cpu=x86-64-v$(CONFIG_X86_64_VERSION) -Ztune-cpu=generic
 else
         KBUILD_CFLAGS += -march=x86-64 -mtune=generic
         KBUILD_RUSTFLAGS += -Ctarget-cpu=x86-64 -Ztune-cpu=generic
